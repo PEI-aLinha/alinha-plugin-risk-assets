@@ -31,7 +31,6 @@ backend/src/main/kotlin/pt/alinha/riskassets/
 backend/src/main/resources/db/migration/riskassets/   Flyway, schema "riskassets"
 frontend/src/index.ts      definePlugin({ id: 'risk-assets', routes, nav }) — read by the shell
 frontend/src/pages/        React pages
-worker/                    Python collector (providers only), installed into the worker runtime
 plugin.yaml                manifest: id, kind, version, path, publishes, consumes, permissions
 ```
 
@@ -48,9 +47,6 @@ plugin.yaml                manifest: id, kind, version, path, publishes, consume
 - Frontend: import only `@alinha/plugin-sdk`, `@alinha/ui` and `@alinha/api-client`. Use `useHost()` for the
   session, permissions and `api`. Labels, titles and **route paths** in European Portuguese. Code and comments in
   English.
-- Providers: collectors are **read-only** and treat collected data as untrusted. Job payloads follow
-  `contracts/jobs/*.schema.json` in the main repo. If a contract has to change, stop and follow the main repo's
-  "Changing `plugin-api` or `contracts/`" procedure.
 
 ## Definition of Done
 
