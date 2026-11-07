@@ -11,7 +11,7 @@ export function RiskAssetsPage() {
 
   return (
     <>
-      <PageHeader title="Risk & Assets" />
+      <PageHeader title="Ativos e riscos" />
       <p>Backend: {ping.isPending ? 'a verificar…' : ping.isError ? 'indisponível' : ping.data.status}</p>
     </>
   )

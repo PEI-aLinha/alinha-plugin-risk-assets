@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 
 class RiskAssetsPluginTest {
     @Test
-    fun `manifest tem o id do plugin`() {
+    fun `manifest has the plugin id`() {
         assertEquals("risk-assets", RiskAssetsPlugin().manifest.id)
     }
 }
