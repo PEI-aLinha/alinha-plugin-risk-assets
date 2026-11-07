@@ -1,0 +1,10 @@
+# Manifest do plugin — manter igual a RiskAssetsPlugin.kt (backend).
+id: risk-assets
+name: "Risk & Assets"
+kind: feature
+version: 0.1.0
+# Onde este repo fica como submodule dentro do repo principal (PEI-aLinha/alinha)
+path: plugins/feature/risk-assets
+publishes: []     # eventos que publica (ex.: AssessmentSubmitted)
+consumes: []      # eventos que consome
+permissions: []   # recursos RBAC (ex.: assessment:read, assessment:edit)
