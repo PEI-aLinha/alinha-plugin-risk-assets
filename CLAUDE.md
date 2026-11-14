@@ -45,7 +45,7 @@ plugin.yaml                manifest: id, kind, version, path, publishes, consume
 - Every endpoint needs `@RequiresPermission`. Get the tenant from `TenantContext` (never from the request) and
   filter every query by it. Call `AuditTrail.record(...)` for every write, in the same transaction.
 - Frontend: import only `@alinha/plugin-sdk`, `@alinha/ui` and `@alinha/api-client`. Use `useHost()` for the
-  session, permissions and `api`. Labels, titles and **route paths** in European Portuguese. Code and comments in
+  session, permissions and `api`. Labels and titles in European Portuguese; **URL paths in English**. Code and comments in
   English.
 
 ## Definition of Done
