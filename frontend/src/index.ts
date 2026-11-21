@@ -1,4 +1,5 @@
 import { definePlugin } from '@alinha/plugin-sdk'
+import { Boxes } from 'lucide-react'
 import { RiskAssetsPage } from './pages/RiskAssetsPage'
 
 /**
@@ -14,10 +15,10 @@ export default definePlugin({
   name: 'Risk & Assets',
   routes: {
     client: [
-      { path: 'assets', handle: { title: 'Ativos e riscos' }, Component: RiskAssetsPage },
+      { path: 'assets', handle: { title: 'Ativos' }, Component: RiskAssetsPage },
     ],
   },
   nav: [
-    { label: 'Ativos e riscos', path: 'assets', area: 'client' },
+    { label: 'Ativos', path: 'assets', area: 'client', icon: Boxes, order: 50 },
   ],
 })
