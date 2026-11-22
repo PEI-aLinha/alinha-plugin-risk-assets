@@ -1,18 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
-import { useHost } from '@alinha/plugin-sdk'
-import { PageHeader } from '@alinha/ui'
+import { Boxes } from 'lucide-react'
+import { EmptyState, PageHeader } from '@alinha/ui'
 
 export function RiskAssetsPage() {
-  const { api } = useHost()
-  const ping = useQuery({
-    queryKey: ['risk-assets', 'ping'],
-    queryFn: () => api<{ plugin: string; status: string }>('/risk-assets/ping'),
-  })
-
   return (
     <>
-      <PageHeader title="Ativos e riscos" />
-      <p>Backend: {ping.isPending ? 'a verificar…' : ping.isError ? 'indisponível' : ping.data.status}</p>
+      <PageHeader title="Ativos" subtitle="Equipamentos, sistemas e serviços da organização." />
+      <EmptyState icon={<Boxes className="size-5" aria-hidden />} title="Em construção">
+        Aqui vai poder registar os equipamentos, sistemas e serviços da sua organização e indicar quais são mais importantes para o negócio.
+      </EmptyState>
     </>
   )
 }
