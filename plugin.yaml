@@ -5,6 +5,8 @@ kind: feature
 version: 0.1.0
 # Where this repo lives as a submodule inside the main repo (PEI-aLinha/alinha)
 path: plugins/feature/risk-assets
-publishes: []     # events it publishes (e.g. AssessmentSubmitted)
+publishes: [RiskRegistered]     # events it publishes
 consumes: []      # events it consumes
-permissions: []   # RBAC resources (e.g. assessment:read, assessment:edit)
+permissions:      # RBAC resources; role mapping lives in RiskAssetsPlugin.kt
+  - risk:read     # consultant, responsible
+  - risk:edit     # consultant

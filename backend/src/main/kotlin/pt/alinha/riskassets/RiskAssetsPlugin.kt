@@ -13,8 +13,19 @@ class RiskAssetsPlugin : AlinhaPlugin {
         name = "Risk & Assets",
         kind = PluginKind.FEATURE,
         version = "0.1.0",
-        publishes = setOf(),
+        publishes = setOf("RiskRegistered"),
         consumes = setOf(),
-        permissions = setOf(),
+        permissions = setOf(RISK_READ, RISK_EDIT),
+        rolePermissions = mapOf(
+            // The consultant runs the risk analysis; the Designated Officer follows it. Analysts get no access:
+            // the register shows the organization's weaknesses (least privilege, docs/rbac.md).
+            "consultant" to setOf(RISK_READ, RISK_EDIT),
+            "responsible" to setOf(RISK_READ),
+        ),
     )
+
+    companion object {
+        const val RISK_READ = "risk:read"
+        const val RISK_EDIT = "risk:edit"
+    }
 }
