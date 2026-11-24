@@ -43,9 +43,15 @@ data class RiskMatrix(
 
     fun isImpact(value: Int) = impact.any { it.value == value }
 
-    /** The level of a score the scales can produce. */
+    /**
+     * The level of [score]. Total, so a risk saved under an older, larger scale still gets a level: a score in no
+     * band takes the level of the closest band below it (the highest band above every band, the lowest band below
+     * all of them). The startup check makes every score the current scales produce hit exactly one band.
+     */
     fun levelOf(score: Int): RiskLevel =
-        bands.single { score in it.minScore..it.maxScore }.level
+        (orderedBands.lastOrNull { it.minScore <= score } ?: orderedBands.first()).level
+
+    private val orderedBands get() = bands.sortedBy(RiskBand::minScore)
 
     private fun requireScale(name: String, steps: List<ScaleStep>) {
         require(steps.isNotEmpty()) { "Risk matrix: the $name scale is empty" }

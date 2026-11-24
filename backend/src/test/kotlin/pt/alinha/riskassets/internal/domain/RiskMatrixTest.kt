@@ -31,6 +31,15 @@ class RiskMatrixTest {
     }
 
     @Test
+    fun `risks saved under a larger scale still get a level after the scale shrinks`() {
+        // Scores a 5x5 matrix produced, read with the default 3x3: none of them may fail.
+        assertThat(matrix.levelOf(25)).isEqualTo(RiskLevel.HIGH)
+        assertThat(matrix.levelOf(12)).isEqualTo(RiskLevel.HIGH)
+        assertThat(matrix.levelOf(5)).isEqualTo(RiskLevel.MEDIUM)
+        assertThat(matrix.levelOf(0)).isEqualTo(RiskLevel.LOW)
+    }
+
+    @Test
     fun `a score with no band fails at startup`() {
         assertThatThrownBy { RiskMatrix(bands = listOf(RiskBand(RiskLevel.LOW, 1, 2), RiskBand(RiskLevel.HIGH, 6, 9))) }
             .hasMessageContaining("score 3 is in 0 bands")
