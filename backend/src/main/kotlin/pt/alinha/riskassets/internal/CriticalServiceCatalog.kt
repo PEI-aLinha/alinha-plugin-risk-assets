@@ -67,7 +67,9 @@ class CriticalServiceCatalog(
 
     @Transactional
     fun delete(id: UUID) {
-        val entity = services.findOneById(id) ?: throw CriticalServiceNotFoundException()
+        // Locked before the links are read: an asset write linking this service either committed already (and its
+        // link is in the list below) or waits and then gets a 422, so the cascade never drops an unaudited link.
+        val entity = services.findLockedById(id) ?: throw CriticalServiceNotFoundException()
         // Each linked asset changes (serviceIds): version and updatedAt go up and it gets its own audit entry, so a
         // PUT still holding the old version is a 409, not a 422 about a service that no longer exists.
         val now = Instant.now()

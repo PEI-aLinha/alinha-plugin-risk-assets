@@ -101,18 +101,19 @@ class AssetInventory(
 
     /**
      * The tenant-filtered load is the guard against linking another organization's service (the join table has no
-     * tenant column): a missing id, foreign or deleted, is a validation error.
+     * tenant column): a missing id, foreign or deleted, is a validation error. The services stay locked `FOR SHARE`
+     * until the transaction ends, so none of them can be deleted before the links are written.
      */
     private fun loadServices(ids: Set<UUID>): Set<CriticalServiceEntity> {
         if (ids.isEmpty()) return emptySet()
         val found = services.findAllByIdIn(ids).toSet()
-        if (found.size != ids.size) {
-            throw InvalidInventoryDataException(
-                listOf(FieldError("serviceIds", "Um dos serviços escolhidos já não existe. Recarregue a página.")),
-            )
-        }
+        if (found.size != ids.size) throw missingService()
         return found
     }
+
+    private fun missingService() = InvalidInventoryDataException(
+        listOf(FieldError("serviceIds", "Um dos serviços escolhidos já não existe. Recarregue a página.")),
+    )
 
     private fun validated(input: AssetInput, extra: List<FieldError> = emptyList()): AssetData =
         when (val result = InventoryValidator.asset(input, extra)) {
