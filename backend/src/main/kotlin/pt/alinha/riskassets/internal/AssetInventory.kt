@@ -65,8 +65,8 @@ class AssetInventory(
         audit.record(
             "asset.created", ASSET_ENTITY_TYPE, saved.id.toString(),
             mapOf(
-                "type" to data.type.name,
-                "criticality" to data.criticality.name,
+                "type" to data.type.json,
+                "criticality" to data.criticality.json,
                 "serviceIds" to data.serviceIds.map { it.toString() }.sorted(),
             ),
         )

@@ -41,7 +41,7 @@ class CriticalServiceCatalog(
         val saved = save(CriticalServiceEntity(UUID.randomUUID(), Instant.now(), data))
         audit.record(
             "critical_service.created", SERVICE_ENTITY_TYPE, saved.id.toString(),
-            mapOf("criticality" to data.criticality.name),
+            mapOf("criticality" to data.criticality.json),
         )
         return saved.toView()
     }
