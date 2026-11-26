@@ -25,6 +25,7 @@ import pt.alinha.core.tenant.internal.ScopedCorrelationContext
 import pt.alinha.core.tenant.internal.TenantResolutionInterceptor
 import pt.alinha.core.tenant.internal.TenantWebConfig
 import pt.alinha.riskassets.RiskAssetsPlugin
+import pt.alinha.riskassets.internal.web.AssetController
 import pt.alinha.riskassets.internal.web.CriticalServiceController
 import pt.alinha.riskassets.internal.web.RiskAssetsProblems
 
@@ -46,6 +47,7 @@ import pt.alinha.riskassets.internal.web.RiskAssetsProblems
     AuditActor::class, JpaAuditTrail::class,
     RiskAssetsPlugin::class,
     CriticalServiceCatalog::class, CriticalServiceController::class, RiskAssetsProblems::class,
+    AssetInventory::class, AssetController::class,
 )
 class RiskAssetsTestApplication {
     @Bean

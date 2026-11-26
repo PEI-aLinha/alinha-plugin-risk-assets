@@ -19,3 +19,22 @@ fun MockMvc.createService(token: String, name: String = "Faturação", criticali
     }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
     return JsonPath.read(body, "$.id")
 }
+
+internal const val ASSETS = "/api/risk-assets/assets"
+
+/** Registers an asset linked to [serviceIds] and returns its id. */
+fun MockMvc.createAsset(
+    token: String,
+    name: String = "Servidor ERP",
+    type: String = "server",
+    criticality: String = "high",
+    serviceIds: List<String> = emptyList(),
+): String {
+    val ids = serviceIds.joinToString(",") { "\"$it\"" }
+    val body = post(ASSETS) {
+        header("Authorization", "Bearer $token")
+        contentType = MediaType.APPLICATION_JSON
+        content = """{"name":"$name","type":"$type","owner":"Rui","criticality":"$criticality","serviceIds":[$ids]}"""
+    }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
+    return JsonPath.read(body, "$.id")
+}

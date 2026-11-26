@@ -18,6 +18,9 @@ interface CriticalServiceRepository : Repository<CriticalServiceEntity, UUID> {
 
     fun findOneById(id: UUID): CriticalServiceEntity?
 
+    /** Tenant-filtered load of the services an asset links to: the guard against another organization's ids. */
+    fun findAllByIdIn(ids: Collection<UUID>): List<CriticalServiceEntity>
+
     fun findAllBy(pageable: Pageable): Page<CriticalServiceEntity>
 
     /** Assets linked to a service (JPQL, so the tenant restriction applies). */
