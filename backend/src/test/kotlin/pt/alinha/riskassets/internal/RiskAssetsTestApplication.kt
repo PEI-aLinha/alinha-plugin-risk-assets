@@ -25,6 +25,8 @@ import pt.alinha.core.tenant.internal.ScopedCorrelationContext
 import pt.alinha.core.tenant.internal.TenantResolutionInterceptor
 import pt.alinha.core.tenant.internal.TenantWebConfig
 import pt.alinha.riskassets.RiskAssetsPlugin
+import pt.alinha.riskassets.internal.web.CriticalServiceController
+import pt.alinha.riskassets.internal.web.RiskAssetsProblems
 
 /**
  * The plugin with the core's real RBAC, tenant resolution and audit trail on PostgreSQL. Only the JWT decoder is a
@@ -43,6 +45,7 @@ import pt.alinha.riskassets.RiskAssetsPlugin
     HibernateTenantResolver::class, CorrelationIdFilter::class, ScopedCorrelationContext::class,
     AuditActor::class, JpaAuditTrail::class,
     RiskAssetsPlugin::class,
+    CriticalServiceCatalog::class, CriticalServiceController::class, RiskAssetsProblems::class,
 )
 class RiskAssetsTestApplication {
     @Bean
