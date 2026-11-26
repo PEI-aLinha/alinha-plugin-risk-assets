@@ -68,7 +68,10 @@ class InventoryPermissionsTest {
             else -> null
         }
         val before = auditCount(tenant)
-        val token = if (role == "consultant") "consultant.${UUID.randomUUID()}.$tenant" else bearer(role, tenant)
+        // A real registrant has no organization yet, so its token carries no tenant at all.
+        val token = if (role == "registrant") "registrant.${UUID.randomUUID()}" else bearer(role, tenant)
+        val table = if (path.startsWith("/services")) "critical_service" else "asset"
+        val targetBefore = jdbc.queryForList("select * from riskassets.$table where id = ?::uuid", id)
 
         mvc.request(HttpMethod.valueOf(method), "/api/risk-assets" + path.replace("{id}", id)) {
             header("Authorization", "Bearer $token")
@@ -79,6 +82,10 @@ class InventoryPermissionsTest {
             }
         }.andExpect { status { isEqualTo(expected) } }
 
-        if (expected == 403) assertThat(auditCount(tenant)).isEqualTo(before)
+        if (expected == 403) {
+            assertThat(auditCount(tenant)).isEqualTo(before)
+            // Forbidden PUT/DELETE leave the target exactly as it was (present, same version and data).
+            assertThat(jdbc.queryForList("select * from riskassets.$table where id = ?::uuid", id)).isEqualTo(targetBefore)
+        }
     }
 }
