@@ -77,12 +77,13 @@ class AssetInventory(
     @Transactional
     fun update(id: UUID, input: AssetInput, version: Long?): AssetView {
         val entity = assets.findOneById(id) ?: throw AssetNotFoundException()
-        val missingVersion = if (version == null) {
-            listOf(FieldError("version", "Recarregue a página e volte a fazer as alterações."))
-        } else {
-            emptyList()
-        }
-        val data = validated(input, missingVersion)
+        // Required on update (unlike create), so that a client that forgets serviceIds does not unlink everything.
+        val missing = listOfNotNull(
+            FieldError("version", "Recarregue a página e volte a fazer as alterações.").takeIf { version == null },
+            FieldError("serviceIds", "Indique os serviços que o ativo suporta (lista vazia se nenhum).")
+                .takeIf { input.serviceIds == null },
+        )
+        val data = validated(input, missing)
         if (version != entity.version) throw StaleVersionException()
         val changed = entity.update(data, loadServices(data.serviceIds), Instant.now())
         if (changed.isEmpty()) return entity.toView()

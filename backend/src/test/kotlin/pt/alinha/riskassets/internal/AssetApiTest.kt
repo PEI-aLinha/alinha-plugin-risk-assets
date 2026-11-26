@@ -194,7 +194,7 @@ class AssetApiTest {
     @Test
     fun `updating with the same data writes no audit and does not bump the version`() {
         val id = mvc.createAsset(analyst)
-        put(id, """{"version":0,"name":"Servidor ERP","type":"server","owner":"Rui","criticality":"high"}""").andExpect {
+        put(id, """{"version":0,"name":"Servidor ERP","type":"server","owner":"Rui","criticality":"high","serviceIds":[]}""").andExpect {
             status { isOk() }
             jsonPath("$.version") { value(0) }
         }
@@ -213,16 +213,49 @@ class AssetApiTest {
     }
 
     @Test
-    fun `deleting a service keeps its assets and drops only that link`() {
+    fun `a PUT without serviceIds is a 422 and keeps the links`() {
+        val s1 = mvc.createService(responsible, "Faturação")
+        val id = mvc.createAsset(analyst, serviceIds = listOf(s1))
+        put(id, """{"version":0,"name":"Servidor ERP","type":"server","owner":"Rui","criticality":"high"}""").andExpect {
+            status { isUnprocessableContent() }
+            jsonPath("$.errors[0].field") { value("serviceIds") }
+        }
+        mvc.get("$ASSETS/$id") { header("Authorization", "Bearer $analyst") }.andExpect {
+            jsonPath("$.version") { value(0) }
+            jsonPath("$.serviceIds[0]") { value(s1) }
+        }
+        assertThat(auditRows("asset.updated")).isEmpty()
+    }
+
+    @Test
+    fun `deleting a service drops only that link, bumps the asset's version and audits it`() {
         val s1 = mvc.createService(responsible, "Faturação")
         val s2 = mvc.createService(responsible, "Vendas")
         val id = mvc.createAsset(analyst, serviceIds = listOf(s1, s2))
+        val other = mvc.createAsset(analyst, name = "Switch", serviceIds = listOf(s2))
+        val before = JsonPath.read<String>(
+            mvc.get("$ASSETS/$id") { header("Authorization", "Bearer $analyst") }.andReturn().response.contentAsString,
+            "$.updatedAt",
+        )
         mvc.delete("$SERVICES/$s1") { header("Authorization", "Bearer $responsible") }.andExpect { status { isNoContent() } }
         mvc.get("$ASSETS/$id") { header("Authorization", "Bearer $analyst") }.andExpect {
             status { isOk() }
+            jsonPath("$.version") { value(1) }
             jsonPath("$.serviceIds.length()") { value(1) }
             jsonPath("$.serviceIds[0]") { value(s2) }
+            jsonPath("$.updatedAt") { value(org.hamcrest.Matchers.not(before)) }
         }
+        mvc.get("$ASSETS/$other") { header("Authorization", "Bearer $analyst") }.andExpect { jsonPath("$.version") { value(0) } }
+        val rows = auditRows("asset.updated")
+        assertThat(rows.map { it["entity_id"].toString() }).containsExactly(id)
+        assertThat(JsonPath.read<List<String>>(rows[0]["details"].toString(), "$.changed")).containsExactly("serviceIds")
+
+        // A form opened before the deletion still holds version 0 and the deleted id: a 409, not a 422.
+        put(id, """{"version":0,"name":"Servidor ERP","type":"server","owner":"Rui","criticality":"high","serviceIds":["$s1","$s2"]}""")
+            .andExpect {
+                status { isConflict() }
+                jsonPath("$.code") { value("VERSION_CONFLICT") }
+            }
     }
 
     @Test
@@ -243,8 +276,8 @@ class AssetApiTest {
     @Test
     fun `a stale version is a 409`() {
         val id = mvc.createAsset(analyst)
-        put(id, """{"version":0,"name":"Novo nome","type":"server","owner":"Rui","criticality":"high"}""").andExpect { status { isOk() } }
-        put(id, """{"version":0,"name":"Outro","type":"server","owner":"Rui","criticality":"high"}""").andExpect {
+        put(id, """{"version":0,"name":"Novo nome","type":"server","owner":"Rui","criticality":"high","serviceIds":[]}""").andExpect { status { isOk() } }
+        put(id, """{"version":0,"name":"Outro","type":"server","owner":"Rui","criticality":"high","serviceIds":[]}""").andExpect {
             status { isConflict() }
             jsonPath("$.code") { value("VERSION_CONFLICT") }
         }
@@ -253,7 +286,7 @@ class AssetApiTest {
     @Test
     fun `a missing version is a 422 and another organization's asset is a 404`() {
         val id = mvc.createAsset(analyst)
-        put(id, """{"name":"Novo","type":"server","owner":"Rui","criticality":"high"}""").andExpect {
+        put(id, """{"name":"Novo","type":"server","owner":"Rui","criticality":"high","serviceIds":[]}""").andExpect {
             status { isUnprocessableContent() }
             jsonPath("$.errors[0].field") { value("version") }
         }

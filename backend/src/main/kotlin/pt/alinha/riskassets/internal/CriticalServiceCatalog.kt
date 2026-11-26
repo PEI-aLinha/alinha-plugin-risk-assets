@@ -10,6 +10,7 @@ import pt.alinha.riskassets.internal.domain.CriticalServiceInput
 import pt.alinha.riskassets.internal.domain.FieldError
 import pt.alinha.riskassets.internal.domain.InventoryValidator
 import pt.alinha.riskassets.internal.domain.Validation
+import pt.alinha.riskassets.internal.persistence.AssetRepository
 import pt.alinha.riskassets.internal.persistence.CriticalServiceEntity
 import pt.alinha.riskassets.internal.persistence.CriticalServiceRepository
 import java.time.Instant
@@ -22,6 +23,7 @@ internal const val SERVICE_NAME_CONSTRAINT = "critical_service_name_uq"
 @Service
 class CriticalServiceCatalog(
     private val services: CriticalServiceRepository,
+    private val assets: AssetRepository,
     private val audit: AuditTrail,
 ) {
 
@@ -66,10 +68,19 @@ class CriticalServiceCatalog(
     @Transactional
     fun delete(id: UUID) {
         val entity = services.findOneById(id) ?: throw CriticalServiceNotFoundException()
-        // The links go with the service (on delete cascade); the count tells the audit trail how many.
-        val unlinked = services.countLinkedAssets(entity.id)
+        // Each linked asset changes (serviceIds): version and updatedAt go up and it gets its own audit entry, so a
+        // PUT still holding the old version is a 409, not a 422 about a service that no longer exists.
+        val now = Instant.now()
+        val linked = assets.findAllByServicesId(entity.id).sortedBy { it.id }
+        linked.forEach { asset ->
+            asset.unlink(entity.id, now)
+            assets.saveAndFlush(asset)
+            audit.record("asset.updated", ASSET_ENTITY_TYPE, asset.id.toString(), mapOf("changed" to listOf("serviceIds")))
+        }
         services.delete(entity)
-        audit.record("critical_service.deleted", SERVICE_ENTITY_TYPE, id.toString(), mapOf("unlinkedAssets" to unlinked))
+        audit.record(
+            "critical_service.deleted", SERVICE_ENTITY_TYPE, id.toString(), mapOf("unlinkedAssets" to linked.size),
+        )
     }
 
     private fun validated(input: CriticalServiceInput, extra: List<FieldError> = emptyList()): CriticalServiceData =

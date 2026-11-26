@@ -15,4 +15,7 @@ interface AssetRepository : Repository<AssetEntity, UUID>, JpaSpecificationExecu
     fun delete(entity: AssetEntity)
 
     fun findOneById(id: UUID): AssetEntity?
+
+    /** Assets linked to a service (derived query, so the tenant restriction applies). */
+    fun findAllByServicesId(serviceId: UUID): List<AssetEntity>
 }

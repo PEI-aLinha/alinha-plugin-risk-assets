@@ -86,4 +86,9 @@ class AssetEntity(
         updatedAt = at
         return changed
     }
+
+    /** Drops the link to a service that is being deleted; the collection change bumps [version] on flush. */
+    fun unlink(serviceId: UUID, at: Instant) {
+        if (services.removeIf { it.id == serviceId }) updatedAt = at
+    }
 }

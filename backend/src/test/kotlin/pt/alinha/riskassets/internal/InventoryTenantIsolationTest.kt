@@ -59,7 +59,7 @@ class InventoryTenantIsolationTest {
         val assetBefore = row("asset", assetA)
         val auditA = auditCount(tenantA)
         val svcBody = """{"version":0,"name":"X","description":null,"owner":"Y","criticality":"low"}"""
-        val assetBody = """{"version":0,"name":"X","type":"server","owner":"Y","criticality":"low"}"""
+        val assetBody = """{"version":0,"name":"X","type":"server","owner":"Y","criticality":"low","serviceIds":[]}"""
 
         mvc.get("$SERVICES/$serviceA") { header("Authorization", "Bearer $tokenB") }.andExpect { status { isNotFound() } }
         mvc.put("$SERVICES/$serviceA") {

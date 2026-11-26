@@ -64,7 +64,7 @@ class InventoryPermissionsTest {
             method == "POST" -> """{"name":"Novo","type":"server","owner":"Rui","criticality":"low"}"""
             method == "PUT" && path.startsWith("/services") ->
                 """{"version":0,"name":"Faturação","description":null,"owner":"Outro","criticality":"high"}"""
-            method == "PUT" -> """{"version":0,"name":"Servidor ERP","type":"server","owner":"Outro","criticality":"high"}"""
+            method == "PUT" -> """{"version":0,"name":"Servidor ERP","type":"server","owner":"Outro","criticality":"high","serviceIds":[]}"""
             else -> null
         }
         val before = auditCount(tenant)

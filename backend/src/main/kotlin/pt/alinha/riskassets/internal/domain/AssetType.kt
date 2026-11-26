@@ -8,9 +8,9 @@ enum class AssetType {
     @JsonProperty("application") APPLICATION,
     @JsonProperty("database") DATABASE,
     @JsonProperty("equipment") EQUIPMENT,
-    @JsonProperty("cloud_service") CLOUD_SERVICE,
+    @JsonProperty("cloud-service") CLOUD_SERVICE,
     @JsonProperty("storage") STORAGE,
-    @JsonProperty("ot_system") OT_SYSTEM,
+    @JsonProperty("ot-system") OT_SYSTEM,
     @JsonProperty("other") OTHER,
     ;
 
@@ -18,7 +18,7 @@ enum class AssetType {
     val json: String by lazy { declaringJavaClass.getField(name).getAnnotation(JsonProperty::class.java).value }
 
     companion object {
-        /** Maps the lowercase JSON name (`"cloud_service"`) to the constant; anything else is null. */
+        /** Maps the kebab-case JSON name (`"cloud-service"`) to the constant; anything else is null. */
         fun fromJson(value: String): AssetType? = entries.firstOrNull { it.json == value }
     }
 }

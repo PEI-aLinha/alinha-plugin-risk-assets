@@ -32,7 +32,7 @@ class InventoryValidatorTest {
     @Test
     fun `json values come from the same names as the contract`() {
         assertThat(Criticality.HIGH.json).isEqualTo("high")
-        assertThat(AssetType.CLOUD_SERVICE.json).isEqualTo("cloud_service")
+        assertThat(AssetType.CLOUD_SERVICE.json).isEqualTo("cloud-service")
     }
 
     @Test
@@ -99,8 +99,9 @@ class InventoryValidatorTest {
         assertThat(Criticality.fromJson("high")).isEqualTo(Criticality.HIGH)
         assertThat(Criticality.fromJson("HIGH")).isNull()
         assertThat(Criticality.fromJson("x")).isNull()
-        assertThat(AssetType.fromJson("cloud_service")).isEqualTo(AssetType.CLOUD_SERVICE)
-        assertThat(AssetType.fromJson("ot_system")).isEqualTo(AssetType.OT_SYSTEM)
+        assertThat(AssetType.fromJson("cloud-service")).isEqualTo(AssetType.CLOUD_SERVICE)
+        assertThat(AssetType.fromJson("ot-system")).isEqualTo(AssetType.OT_SYSTEM)
+        assertThat(AssetType.fromJson("cloud_service")).isNull()
         assertThat(AssetType.fromJson("OT_SYSTEM")).isNull()
     }
 }
