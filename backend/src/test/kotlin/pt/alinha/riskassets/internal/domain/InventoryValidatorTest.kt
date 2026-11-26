@@ -15,6 +15,27 @@ class InventoryValidatorTest {
     }
 
     @Test
+    fun `inner whitespace collapses and control characters are dropped from single-line fields`() {
+        val v = InventoryValidator.service(CriticalServiceInput("ERP  Vendas", null, "Ana\n\u0007  Costa", Criticality.LOW))
+        assertThat((v as Validation.Valid).value.name).isEqualTo("ERP Vendas")
+        assertThat(v.value.owner).isEqualTo("Ana Costa")
+        val w = InventoryValidator.service(CriticalServiceInput("ERP\nVendas\u0000", null, "Ana", Criticality.LOW))
+        assertThat((w as Validation.Valid).value.name).isEqualTo("ERP Vendas")
+    }
+
+    @Test
+    fun `description keeps its line breaks`() {
+        val v = InventoryValidator.service(CriticalServiceInput("A", " linha 1\r\nlinha\u0007 2 ", "Ana", Criticality.LOW))
+        assertThat((v as Validation.Valid).value.description).isEqualTo("linha 1\nlinha 2")
+    }
+
+    @Test
+    fun `json values come from the same names as the contract`() {
+        assertThat(Criticality.HIGH.json).isEqualTo("high")
+        assertThat(AssetType.CLOUD_SERVICE.json).isEqualTo("cloud_service")
+    }
+
+    @Test
     fun `missing or blank fields get one message each`() {
         val v = InventoryValidator.asset(AssetInput(name = "  ", owner = null)) as Validation.Invalid
         assertThat(v.errors).containsExactlyInAnyOrder(
@@ -59,6 +80,10 @@ class InventoryValidatorTest {
         val many = List(101) { UUID.randomUUID() }
         val bad = InventoryValidator.asset(base.copy(serviceIds = many)) as Validation.Invalid
         assertThat(bad.errors).containsExactly(FieldError("serviceIds", "Pode ligar até 100 serviços."))
+        val repeated = InventoryValidator.asset(base.copy(serviceIds = List(101) { id })) as Validation.Invalid
+        assertThat(repeated.errors).containsExactly(FieldError("serviceIds", "Pode ligar até 100 serviços."))
+        val hundred = InventoryValidator.asset(base.copy(serviceIds = List(100) { id })) as Validation.Valid
+        assertThat(hundred.value.serviceIds).isEqualTo(setOf(id))
         assertThat(InventoryValidator.asset(base.copy(serviceIds = null))).isInstanceOf(Validation.Valid::class.java)
     }
 

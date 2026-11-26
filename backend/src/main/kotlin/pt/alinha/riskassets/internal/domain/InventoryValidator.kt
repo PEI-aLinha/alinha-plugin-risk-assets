@@ -41,6 +41,9 @@ data class AssetData(
     val serviceIds: Set<UUID>,
 )
 
+private val CONTROL_OR_SPACE = Regex("""[\p{Cc}\s]+""")
+private val CONTROL_BUT_NEWLINE = Regex("""[\p{Cc}&&[^\n]]""")
+
 /** Maximum lengths of the free-text fields (also enforced by the database). */
 internal object InventoryLimits {
     const val NAME = 200
@@ -63,13 +66,13 @@ object InventoryValidator {
         val errors = extra.toMutableList()
         val common = common(input.name, input.description, input.owner, input.criticality, errors)
         if (input.type == null) errors += FieldError("type", "Escolha o tipo de ativo.")
-        val serviceIds = input.serviceIds.orEmpty().toSet()
+        val serviceIds = input.serviceIds.orEmpty()
         if (serviceIds.size > InventoryLimits.SERVICES_PER_ASSET) {
             errors += FieldError("serviceIds", "Pode ligar até ${InventoryLimits.SERVICES_PER_ASSET} serviços.")
         }
         if (errors.isNotEmpty()) return Validation.Invalid(errors)
         return Validation.Valid(
-            AssetData(common.name!!, input.type!!, common.description, common.owner!!, common.criticality!!, serviceIds),
+            AssetData(common.name!!, input.type!!, common.description, common.owner!!, common.criticality!!, serviceIds.toSet()),
         )
     }
 
@@ -82,22 +85,28 @@ object InventoryValidator {
         criticality: Criticality?,
         errors: MutableList<FieldError>,
     ): Common {
-        val name = rawName?.trim().orEmpty()
+        val name = rawName.singleLine()
         when {
             name.isEmpty() -> errors += FieldError("name", "Indique o nome.")
             name.length > InventoryLimits.NAME -> errors += FieldError("name", "O nome pode ter até ${InventoryLimits.NAME} caracteres.")
         }
-        val owner = rawOwner?.trim().orEmpty()
+        val owner = rawOwner.singleLine()
         when {
             owner.isEmpty() -> errors += FieldError("owner", "Indique quem é o responsável.")
             owner.length > InventoryLimits.OWNER ->
                 errors += FieldError("owner", "O responsável pode ter até ${InventoryLimits.OWNER} caracteres.")
         }
-        val description = rawDescription?.trim()?.ifEmpty { null }
+        val description = rawDescription.multiLine().ifEmpty { null }
         if (description != null && description.length > InventoryLimits.DESCRIPTION) {
             errors += FieldError("description", "A descrição pode ter até ${InventoryLimits.DESCRIPTION} caracteres.")
         }
         if (criticality == null) errors += FieldError("criticality", "Escolha a criticidade.")
         return Common(name, description, owner, criticality)
     }
+
+    /** One-line text: control characters (line breaks included) become a space, runs collapse, ends are trimmed. */
+    private fun String?.singleLine(): String = this.orEmpty().replace(CONTROL_OR_SPACE, " ").trim()
+
+    /** Multi-line text: line breaks are kept (as `\n`), other control characters removed, the ends trimmed. */
+    private fun String?.multiLine(): String = this.orEmpty().replace("\r\n", "\n").replace(CONTROL_BUT_NEWLINE, "").trim()
 }

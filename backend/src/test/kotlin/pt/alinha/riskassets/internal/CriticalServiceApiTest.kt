@@ -78,7 +78,16 @@ class CriticalServiceApiTest {
         assertThat(rows[0]["entity_type"]).isEqualTo("critical_service")
         assertThat(rows[0]["entity_id"].toString()).isEqualTo(id)
         val details = rows[0]["details"].toString()
-        assertThat(details).contains("HIGH").doesNotContain("Ana Costa").doesNotContain("Faturação")
+        assertThat(details).contains("\"high\"").doesNotContain("HIGH").doesNotContain("Ana Costa").doesNotContain("Faturação")
+    }
+
+    @Test
+    fun `a name differing only in case and spacing is a 409 SERVICE_NAME_TAKEN`() {
+        mvc.createService(token, "ERP Vendas")
+        post("""{"name":"erp  vendas","owner":"Y","criticality":"low"}""").andExpect {
+            status { isConflict() }
+            jsonPath("$.code") { value("SERVICE_NAME_TAKEN") }
+        }
     }
 
     @Test

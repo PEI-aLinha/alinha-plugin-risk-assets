@@ -96,7 +96,7 @@ class AssetApiTest {
         assertThat(rows).hasSize(1)
         assertThat(rows[0]["entity_type"]).isEqualTo("asset")
         val details = rows[0]["details"].toString()
-        assertThat(details).contains("SERVER").contains("HIGH").contains(s1).contains(s2)
+        assertThat(details).contains("\"server\"").contains("\"high\"").doesNotContain("SERVER").doesNotContain("HIGH").contains(s1).contains(s2)
             .doesNotContain("Rui").doesNotContain("Servidor ERP")
     }
 
@@ -118,6 +118,14 @@ class AssetApiTest {
         post("""{"name":"X","type":"server","owner":"Y","criticality":"HIGH"}""").andExpect {
             status { isUnprocessableContent() }
             jsonPath("$.errors[0].field") { value("criticality") }
+        }
+    }
+
+    @Test
+    fun `a null service id is a 422 naming serviceIds`() {
+        post("""{"name":"X","type":"server","owner":"Y","criticality":"low","serviceIds":[null]}""").andExpect {
+            status { isUnprocessableContent() }
+            jsonPath("$.errors[0].field") { value("serviceIds") }
         }
     }
 
