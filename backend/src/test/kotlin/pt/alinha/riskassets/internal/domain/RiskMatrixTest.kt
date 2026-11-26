@@ -60,6 +60,12 @@ class RiskMatrixTest {
     }
 
     @Test
+    fun `a scale value above the cap fails at startup`() {
+        assertThatThrownBy { RiskMatrix(likelihood = listOf(ScaleStep(1, "", ""), ScaleStep(RiskMatrix.MAX_SCALE_VALUE + 1, "", ""))) }
+            .hasMessageContaining("must be 1..${RiskMatrix.MAX_SCALE_VALUE}")
+    }
+
+    @Test
     fun `a scale out of order fails at startup`() {
         assertThatThrownBy { RiskMatrix(likelihood = listOf(ScaleStep(2, "", ""), ScaleStep(1, "", ""))) }
             .hasMessageContaining("ascending")

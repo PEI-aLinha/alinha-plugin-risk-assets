@@ -12,7 +12,9 @@ data class RiskBand(val level: RiskLevel, val minScore: Int, val maxScore: Int)
  * ISO/IEC 27005 risk matrix (risk-assets#4). A risk's score is `likelihood × impact`, and its level is the band that
  * contains the score. The scale is configuration (`alinha.risk-assets.matrix`), so moving to 5×5 needs no code
  * change. The default is the prototype's 3×3 (decision D2). The level is computed on every read and never stored,
- * so changing the bands reclassifies every risk at once.
+ * so changing the bands reclassifies every risk at once. The stored score is `likelihood × impact` and does not
+ * depend on the matrix, so it never needs recomputing; a matrix change only changes which band a score falls in.
+ * There is no matrix version on a risk: its level is always the current matrix's reading of it.
  *
  * Invalid configuration fails at startup: the scales must be ascending positive values, and the bands must give
  * every possible score exactly one level, never a lower level to a higher score.
@@ -55,13 +57,16 @@ data class RiskMatrix(
 
     private fun requireScale(name: String, steps: List<ScaleStep>) {
         require(steps.isNotEmpty()) { "Risk matrix: the $name scale is empty" }
-        require(steps.all { it.value >= 1 }) { "Risk matrix: $name values start at 1" }
+        require(steps.all { it.value in 1..MAX_SCALE_VALUE }) { "Risk matrix: $name values must be 1..$MAX_SCALE_VALUE" }
         require(steps.zipWithNext().all { (a, b) -> a.value < b.value }) {
             "Risk matrix: $name values must be ascending and distinct"
         }
     }
 
     companion object {
+        /** Far above ISO/IEC 27005's usual 3 to 5 levels; keeps `likelihood × impact` small (and the DB checks valid). */
+        const val MAX_SCALE_VALUE = 10
+
         val DEFAULT_LIKELIHOOD = listOf(
             ScaleStep(1, "Baixa", "Pouco provável: não aconteceu nos últimos anos."),
             ScaleStep(2, "Média", "Pode acontecer: já aconteceu a empresas parecidas."),

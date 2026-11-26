@@ -18,7 +18,14 @@ import org.springframework.test.web.servlet.ResultActionsDsl
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
+import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.web.context.request.RequestContextHolder
+import pt.alinha.core.tenant.TenantContext
+import pt.alinha.pluginapi.TenantId
 import pt.alinha.riskassets.events.RiskRegistered
+import pt.alinha.riskassets.internal.persistence.RiskRepository
 import java.util.UUID
 
 private const val RISKS = "/api/risk-assets/risks"
@@ -49,6 +56,9 @@ class RiskRegisterIntegrationTest {
     @Autowired private lateinit var mvc: MockMvc
     @Autowired private lateinit var jdbc: JdbcTemplate
     @Autowired private lateinit var events: ApplicationEvents
+    @Autowired private lateinit var tx: TransactionTemplate
+    @Autowired private lateinit var repository: RiskRepository
+    @Autowired private lateinit var tenants: TenantContext
 
     private lateinit var tenant: UUID
 
@@ -178,6 +188,53 @@ class RiskRegisterIntegrationTest {
 
         update(id, riskBody(version = 0)).andExpect { status { isOk() }; jsonPath("$.version") { value(0) } }
         assertThat(audit("risk.updated")).isEmpty()
+    }
+
+    @Test
+    fun `a stale form is a conflict even when it also has invalid fields`() {
+        val id = registeredId()
+        update(id, riskBody(threat = "Primeira", version = 0)).andExpect { status { isOk() } }
+
+        update(id, riskBody(threat = " ", likelihood = 9, version = 0)).andExpect {
+            status { isConflict() }
+            jsonPath("$.code") { value("VERSION_CONFLICT") }
+        }
+    }
+
+    @Test
+    fun `two saves of the same version cannot both win`() {
+        val id = UUID.fromString(registeredId())
+        // Two requests read version 0; the first commits, the second's flush must fail instead of overwriting it.
+        // The test context binds a mock request to this thread, and runAs refuses to run inside a request.
+        RequestContextHolder.resetRequestAttributes()
+        val failure = runCatching {
+            tenants.runAs(TenantId(tenant)) {
+                tx.execute {
+                    val stale = repository.findOneById(id)!!
+                    // The other request, in its own transaction: it commits first.
+                    TransactionTemplate(tx.transactionManager!!).apply {
+                        propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+                    }.executeWithoutResult {
+                        jdbc.update("update riskassets.risk set version = version + 1, threat = 'Outro pedido' where id = ?", id)
+                    }
+                    stale.update(stale.toData().copy(threat = "Este pedido"), java.time.Instant.now())
+                    repository.saveAndFlush(stale)
+                }
+            }
+        }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ObjectOptimisticLockingFailureException::class.java)
+        read("$RISKS/$id").andExpect { jsonPath("$.threat") { value("Outro pedido") } }
+    }
+
+    @Test
+    fun `the audit entries hold no free text`() {
+        val secret = "Servidor sem palavra-passe no armazem"
+        val id = registeredId(riskBody(threat = secret))
+        update(id, riskBody(threat = "$secret 2", version = 0)).andExpect { status { isOk() } }
+
+        val details = jdbc.queryForList("select details::text from audit.audit_event where tenant_id = ?", String::class.java, tenant)
+        assertThat(details).hasSize(2).noneMatch { it.contains("armazem") || it.contains("palavra-passe") || it.contains("Cópias") }
     }
 
     @Test

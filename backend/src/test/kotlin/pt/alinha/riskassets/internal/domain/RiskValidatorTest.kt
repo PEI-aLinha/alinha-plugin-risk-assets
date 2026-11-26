@@ -51,6 +51,18 @@ class RiskValidatorTest {
     }
 
     @Test
+    fun `keeps stored values the current scale no longer has, but refuses new ones`() {
+        val stored = RiskData(null, "Ransomware", null, likelihood = 5, impact = 4, treatment = null, ownerId = null)
+
+        // The 3x3 default after a 5x5: the risk can still be edited with its old values...
+        val kept = RiskValidator.validate(valid.copy(likelihood = 5, impact = 4, treatment = "accept"), matrix, stored = stored)
+        assertThat((kept as Validation.Valid).risk.treatment).isEqualTo(RiskTreatment.ACCEPT)
+        // ...but moving to another value off the scale is refused.
+        assertThat((RiskValidator.validate(valid.copy(likelihood = 4, impact = 4), matrix, stored = stored) as Validation.Invalid)
+            .errors.map { it.field }).containsExactly("likelihood")
+    }
+
+    @Test
     fun `refuses text that is too long`() {
         assertThat(errorsOf(valid.copy(threat = "a".repeat(THREAT_MAX + 1), vulnerability = "b".repeat(VULNERABILITY_MAX + 1))))
             .containsExactly("threat", "vulnerability")

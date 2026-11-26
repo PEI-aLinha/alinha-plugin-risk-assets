@@ -32,7 +32,7 @@ data class RiskMatrixView(val likelihood: List<ScaleStep>, val impact: List<Scal
 
 internal fun RiskEntity.toView(matrix: RiskMatrix) = RiskView(
     id = id,
-    version = version,
+    version = checkNotNull(version) { "Risk $id was not saved yet" },
     assetId = assetId,
     threat = threat,
     vulnerability = vulnerability,

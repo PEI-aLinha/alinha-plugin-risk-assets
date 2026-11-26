@@ -40,7 +40,17 @@ const val THREAT_MAX = 200
 const val VULNERABILITY_MAX = 500
 
 object RiskValidator {
-    fun validate(input: RiskInput, matrix: RiskMatrix, extraErrors: List<FieldError> = emptyList()): Validation {
+    /**
+     * [stored] is the risk being updated, if any. Its likelihood and impact are accepted as they are even when the
+     * current scale no longer has them (the matrix was made smaller), so the risk's other fields can still be changed;
+     * a new value must be on the current scale.
+     */
+    fun validate(
+        input: RiskInput,
+        matrix: RiskMatrix,
+        extraErrors: List<FieldError> = emptyList(),
+        stored: RiskData? = null,
+    ): Validation {
         val errors = extraErrors.toMutableList()
 
         val threat = input.threat?.trim().orEmpty()
@@ -56,11 +66,12 @@ object RiskValidator {
 
         when {
             input.likelihood == null -> errors += FieldError("likelihood", "Escolha a probabilidade.")
-            !matrix.isLikelihood(input.likelihood) -> errors += FieldError("likelihood", NOT_ON_SCALE)
+            !matrix.isLikelihood(input.likelihood) && input.likelihood != stored?.likelihood ->
+                errors += FieldError("likelihood", NOT_ON_SCALE)
         }
         when {
             input.impact == null -> errors += FieldError("impact", "Escolha o impacto.")
-            !matrix.isImpact(input.impact) -> errors += FieldError("impact", NOT_ON_SCALE)
+            !matrix.isImpact(input.impact) && input.impact != stored?.impact -> errors += FieldError("impact", NOT_ON_SCALE)
         }
 
         val treatment = input.treatment?.let { wire ->

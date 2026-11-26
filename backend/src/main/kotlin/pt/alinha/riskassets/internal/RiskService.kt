@@ -71,13 +71,15 @@ class RiskService(
     fun update(id: UUID, input: RiskInput, version: Long?): RiskView {
         // Looked up first: another organization's id is a 404 whatever the data.
         val entity = risks.findOneById(id) ?: throw RiskNotFoundException()
+        // Then the version: a stale form is a 409 even if it also has invalid fields, since its data is outdated anyway.
+        if (version != null && version != entity.version) throw StaleRiskVersionException()
         val missingVersion = if (version == null) {
             listOf(FieldError("version", "Recarregue a página e volte a fazer as alterações."))
         } else {
             emptyList()
         }
-        val risk = validated(input, missingVersion)
-        if (version != entity.version) throw StaleRiskVersionException()
+        // A value saved under an older, larger scale may be kept as it is; only a new value must be on the scale.
+        val risk = validated(input, missingVersion, stored = entity.toData())
         val levelBefore = matrix.levelOf(entity.score)
         val changed = entity.update(risk, Instant.now())
         if (changed.isEmpty()) return entity.toView(matrix)
@@ -94,8 +96,8 @@ class RiskService(
         return saved.toView(matrix)
     }
 
-    private fun validated(input: RiskInput, extraErrors: List<FieldError> = emptyList()): RiskData =
-        when (val result = RiskValidator.validate(input, matrix, extraErrors)) {
+    private fun validated(input: RiskInput, extraErrors: List<FieldError> = emptyList(), stored: RiskData? = null): RiskData =
+        when (val result = RiskValidator.validate(input, matrix, extraErrors, stored)) {
             is Validation.Valid -> result.risk
             is Validation.Invalid -> throw InvalidRiskException(result.errors)
         }

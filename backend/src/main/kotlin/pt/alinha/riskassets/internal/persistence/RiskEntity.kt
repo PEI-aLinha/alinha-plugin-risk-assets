@@ -21,8 +21,9 @@ class RiskEntity(
     risk: RiskData,
 ) : TenantOwnedEntity() {
 
+    /** Null until the first insert, so Spring Data persists a new risk instead of merging it (no extra SELECT). */
     @Version
-    var version: Long = 0
+    var version: Long? = null
         protected set
 
     @Column(name = "asset_id")
