@@ -101,6 +101,11 @@ class CriticalServiceApiTest {
             jsonPath("$.code") { value("VALIDATION_FAILED") }
             jsonPath("$.errors[0].field") { value("page") }
         }
+        mvc.get("$SERVICES?page=abc") { header("Authorization", "Bearer $token") }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.errors[0].field") { value("page") }
+        }
         mvc.get("$SERVICES?pageSize=101") { header("Authorization", "Bearer $token") }.andExpect {
             status { isBadRequest() }
             jsonPath("$.errors[0].field") { value("pageSize") }
@@ -174,6 +179,7 @@ class CriticalServiceApiTest {
         mvc.get("$SERVICES/$id") { header("Authorization", "Bearer $token") }.andExpect {
             jsonPath("$.owner") { value("Rui Dias") }
         }
+        assertThat(auditRows("critical_service.updated")).hasSize(1)
     }
 
     @Test

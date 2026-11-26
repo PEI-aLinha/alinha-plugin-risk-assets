@@ -69,7 +69,6 @@ class CriticalServiceCatalog(
         // The links go with the service (on delete cascade); the count tells the audit trail how many.
         val unlinked = services.countLinkedAssets(entity.id)
         services.delete(entity)
-        services.flush()
         audit.record("critical_service.deleted", SERVICE_ENTITY_TYPE, id.toString(), mapOf("unlinkedAssets" to unlinked))
     }
 
