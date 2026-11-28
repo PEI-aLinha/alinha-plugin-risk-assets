@@ -68,4 +68,20 @@ class InventorySchemaTest {
         insertService(t2, "erp")
         assertThat(jdbc.queryForObject("select count(*) from riskassets.critical_service where lower(name) = 'erp' and tenant_id in (?, ?)", Long::class.java, t1, t2)).isEqualTo(2)
     }
+
+    @Test
+    fun `a link takes the asset's tenant and cannot join two organizations`() {
+        val t1 = UUID.randomUUID()
+        val s1 = insertService(t1, "ERP")
+        val a1 = insertAsset(t1, "Servidor")
+        jdbc.update("insert into riskassets.service_asset (service_id, asset_id) values (?, ?)", s1, a1)
+        assertThat(jdbc.queryForObject("select tenant_id from riskassets.service_asset where asset_id = ?", UUID::class.java, a1)).isEqualTo(t1)
+
+        val foreignAsset = insertAsset(UUID.randomUUID(), "Portátil")
+        assertThatThrownBy {
+            jdbc.update("insert into riskassets.service_asset (tenant_id, service_id, asset_id) values (?, ?, ?)", t1, s1, foreignAsset)
+        }.isInstanceOf(DataIntegrityViolationException::class.java).satisfies({
+            assertThat(violatedConstraint(it)).isEqualTo("service_asset_service_fk")
+        })
+    }
 }
