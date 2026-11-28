@@ -2,6 +2,8 @@ package pt.alinha.riskassets
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import pt.alinha.pluginapi.NavArea
+import pt.alinha.pluginapi.NavEntry
 import java.io.File
 
 class RiskAssetsPluginTest {
@@ -23,6 +25,20 @@ class RiskAssetsPluginTest {
     fun `only consultants edit risks and analysts cannot see them`() {
         manifest.rolePermissions.filterKeys { it != "consultant" }.values
             .forEach { assertThat(it).doesNotContain(RiskAssetsPlugin.RISK_EDIT) }
-        assertThat(manifest.rolePermissions["analyst"].orEmpty()).isEmpty()
+        assertThat(manifest.rolePermissions["analyst"].orEmpty())
+            .doesNotContain(RiskAssetsPlugin.RISK_READ, RiskAssetsPlugin.RISK_EDIT)
+    }
+
+    @Test
+    fun `roles follow the prototype's matrix`() {
+        assertThat(manifest.publishes).isEqualTo(setOf("AssetRegistered", "RiskRegistered"))
+        assertThat(manifest.rolePermissions.getValue("responsible"))
+            .isEqualTo(manifest.permissions - RiskAssetsPlugin.RISK_EDIT)
+        assertThat(manifest.rolePermissions.getValue("analyst"))
+            .isEqualTo(setOf("asset:read", "asset:create", "asset:edit", "critical-service:read"))
+        assertThat(manifest.rolePermissions.getValue("consultant"))
+            .isEqualTo(setOf("asset:read", "critical-service:read", "risk:read", "risk:edit"))
+        assertThat(manifest.nav)
+            .isEqualTo(listOf(NavEntry("Ativos", "assets", NavArea.CLIENT, resource = "asset", order = 50)))
     }
 }

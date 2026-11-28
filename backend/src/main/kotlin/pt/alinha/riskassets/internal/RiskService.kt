@@ -98,7 +98,7 @@ class RiskService(
 
     private fun validated(input: RiskInput, extraErrors: List<FieldError> = emptyList(), stored: RiskData? = null): RiskData =
         when (val result = RiskValidator.validate(input, matrix, extraErrors, stored)) {
-            is Validation.Valid -> result.risk
+            is Validation.Valid -> result.value
             is Validation.Invalid -> throw InvalidRiskException(result.errors)
         }
 }

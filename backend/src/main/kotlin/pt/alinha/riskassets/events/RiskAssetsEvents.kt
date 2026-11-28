@@ -6,6 +6,25 @@ import java.time.Instant
 import java.util.UUID
 
 /**
+ * An asset was registered in the inventory. The event carries ids only; consumers read the data through
+ * `RiskAssetsApi` inside `TenantContext.runAs(tenantId)`.
+ *
+ * `runAs` must start outside a transaction, so do not use `@ApplicationModuleListener` (it opens one first). Use
+ * `@Async @TransactionalEventListener` with no `@Transactional`, and open the transaction inside `runAs`. Pass the
+ * event itself, so the work also carries its [correlationId] (docs/events.md in the main repo):
+ * ```
+ * @Async @TransactionalEventListener
+ * fun on(event: AssetRegistered) = tenants.runAs(event) { tx.execute { ... } }
+ * ```
+ */
+data class AssetRegistered(
+    override val tenantId: TenantId,
+    override val correlationId: UUID,
+    val assetId: UUID,
+    override val occurredAt: Instant = Instant.now(),
+) : DomainEvent
+
+/**
  * A risk was added to the organization's register (risk-assets#4, FR36). Carries the id only: consumers such as the
  * dashboard read models (dashboard-reports#2) ask this plugin for the data inside `TenantContext.runAs(event)`.
  */

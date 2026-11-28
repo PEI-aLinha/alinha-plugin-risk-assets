@@ -10,7 +10,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import pt.alinha.riskassets.internal.InvalidRiskException
 import pt.alinha.riskassets.internal.RiskNotFoundException
 import pt.alinha.riskassets.internal.StaleRiskVersionException
-import tools.jackson.core.JacksonException
 
 /** RFC 9457 Problem Details with `code` and `errors` (ADR 0003). `detail` is shown to the user, in Portuguese. */
 @RestControllerAdvice(basePackageClasses = [RiskController::class])
@@ -58,10 +57,3 @@ class RiskProblems {
 
 private const val INVALID_VALUE = "Este valor não é válido."
 private const val UNREADABLE_BODY = "Não foi possível ler os dados enviados. Recarregue a página e tente de novo."
-private const val MAX_CAUSE_DEPTH = 20
-
-/** The body's field Jackson failed on (`likelihood`), or null if unknown. */
-internal fun unreadableField(e: Throwable): String? =
-    generateSequence(e) { it.cause }.take(MAX_CAUSE_DEPTH)
-        .filterIsInstance<JacksonException>().firstOrNull()
-        ?.path?.mapNotNull { it.propertyName }?.joinToString(".")?.ifEmpty { null }

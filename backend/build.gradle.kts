@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.modulith.starter.core)
+    implementation(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.test)
     // Integration tests: real core RBAC, tenant and audit beans on PostgreSQL (RiskAssetsTestApplication)
@@ -25,5 +26,4 @@ dependencies {
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
     testRuntimeOnly(libs.flyway.postgresql)
-    testRuntimeOnly(libs.postgresql) // JDBC driver for the Testcontainers database
 }

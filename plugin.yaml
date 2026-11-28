@@ -5,8 +5,22 @@ kind: feature
 version: 0.1.0
 # Where this repo lives as a submodule inside the main repo (PEI-aLinha/alinha)
 path: plugins/feature/risk-assets
-publishes: [RiskRegistered]     # events it publishes
+publishes: [AssetRegistered, RiskRegistered]     # events it publishes
 consumes: []      # events it consumes
 permissions:      # RBAC resources; role mapping lives in RiskAssetsPlugin.kt
-  - risk:read     # consultant, responsible
-  - risk:edit     # consultant
+  - asset:read                # responsible, analyst, consultant
+  - asset:create              # responsible, analyst
+  - asset:edit                # responsible, analyst
+  - asset:delete              # responsible
+  - critical-service:read     # responsible, analyst, consultant
+  - critical-service:create   # responsible
+  - critical-service:edit     # responsible
+  - critical-service:delete   # responsible
+  - risk:read                 # consultant, responsible
+  - risk:edit                 # consultant
+nav:              # menu entries; GET /api/plugins shows each one only to roles with its permission
+  - label: "Ativos"
+    path: assets
+    area: client
+    resource: asset              # checked as asset:read (action defaults to read)
+    order: 50

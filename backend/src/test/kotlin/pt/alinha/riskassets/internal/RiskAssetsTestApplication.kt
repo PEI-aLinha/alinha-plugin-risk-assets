@@ -25,13 +25,17 @@ import pt.alinha.core.tenant.internal.ScopedCorrelationContext
 import pt.alinha.core.tenant.internal.TenantResolutionInterceptor
 import pt.alinha.core.tenant.internal.TenantWebConfig
 import pt.alinha.riskassets.RiskAssetsPlugin
+import pt.alinha.riskassets.internal.web.AssetController
+import pt.alinha.riskassets.internal.web.CriticalServiceController
+import pt.alinha.riskassets.internal.web.RiskAssetsProblems
 import pt.alinha.riskassets.internal.web.RiskController
 import pt.alinha.riskassets.internal.web.RiskProblems
 
 /**
  * The plugin with the core's real RBAC, tenant resolution and audit trail on PostgreSQL. Only the JWT decoder is a
- * fake. Token value: `<role>.<sub>.<tenant>` (a colon is not allowed in a Bearer token); a consultant's tenant goes
- * to `tenants`, a client user's to `tenant_id`.
+ * fake. Services and controllers are added to the `@Import` as they are created.
+ * Token value: `<role>.<sub>.<tenant>` (a colon is not allowed in a Bearer token); a consultant's tenant goes to
+ * `tenants`, a client user's to `tenant_id`.
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration
@@ -43,7 +47,10 @@ import pt.alinha.riskassets.internal.web.RiskProblems
     TenantWebConfig::class, TenantResolutionInterceptor::class, JwtTenantContext::class,
     HibernateTenantResolver::class, CorrelationIdFilter::class, ScopedCorrelationContext::class,
     AuditActor::class, JpaAuditTrail::class,
-    RiskAssetsPlugin::class, RiskService::class, RiskController::class, RiskProblems::class,
+    RiskAssetsPlugin::class,
+    CriticalServiceCatalog::class, CriticalServiceController::class, RiskAssetsProblems::class,
+    AssetInventory::class, AssetController::class,
+    RiskService::class, RiskController::class, RiskProblems::class,
 )
 class RiskAssetsTestApplication {
     @Bean

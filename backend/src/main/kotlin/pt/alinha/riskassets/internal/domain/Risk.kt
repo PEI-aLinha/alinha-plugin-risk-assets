@@ -29,13 +29,6 @@ data class RiskData(
     val score: Int get() = likelihood * impact
 }
 
-data class FieldError(val field: String, val message: String)
-
-sealed interface Validation {
-    data class Valid(val risk: RiskData) : Validation
-    data class Invalid(val errors: List<FieldError>) : Validation
-}
-
 const val THREAT_MAX = 200
 const val VULNERABILITY_MAX = 500
 
@@ -50,7 +43,7 @@ object RiskValidator {
         matrix: RiskMatrix,
         extraErrors: List<FieldError> = emptyList(),
         stored: RiskData? = null,
-    ): Validation {
+    ): Validation<RiskData> {
         val errors = extraErrors.toMutableList()
 
         val threat = input.threat?.trim().orEmpty()
