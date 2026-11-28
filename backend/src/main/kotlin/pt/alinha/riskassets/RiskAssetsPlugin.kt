@@ -15,19 +15,23 @@ class RiskAssetsPlugin : AlinhaPlugin {
         name = "Risk & Assets",
         kind = PluginKind.FEATURE,
         version = "0.1.0",
-        publishes = setOf("AssetRegistered"),
+        publishes = setOf("AssetRegistered", "RiskRegistered"),
         consumes = setOf(),
         permissions = setOf(
             ASSET_READ, ASSET_CREATE, ASSET_EDIT, ASSET_DELETE,
             SERVICE_READ, SERVICE_CREATE, SERVICE_EDIT, SERVICE_DELETE,
+            RISK_READ, RISK_EDIT,
         ),
         rolePermissions = mapOf(
+            // The consultant runs the risk analysis; the Designated Officer follows it. Analysts get no risk
+            // access: the register shows the organization's weaknesses (least privilege, docs/rbac.md).
             "responsible" to setOf(
                 ASSET_READ, ASSET_CREATE, ASSET_EDIT, ASSET_DELETE,
                 SERVICE_READ, SERVICE_CREATE, SERVICE_EDIT, SERVICE_DELETE,
+                RISK_READ,
             ),
             "analyst" to setOf(ASSET_READ, ASSET_CREATE, ASSET_EDIT, SERVICE_READ),
-            "consultant" to setOf(ASSET_READ, SERVICE_READ),
+            "consultant" to setOf(ASSET_READ, SERVICE_READ, RISK_READ, RISK_EDIT),
         ),
         nav = listOf(NavEntry("Ativos", "assets", NavArea.CLIENT, resource = "asset", order = 50)),
     )
@@ -41,5 +45,7 @@ class RiskAssetsPlugin : AlinhaPlugin {
         const val SERVICE_CREATE = "critical-service:create"
         const val SERVICE_EDIT = "critical-service:edit"
         const val SERVICE_DELETE = "critical-service:delete"
+        const val RISK_READ = "risk:read"
+        const val RISK_EDIT = "risk:edit"
     }
 }

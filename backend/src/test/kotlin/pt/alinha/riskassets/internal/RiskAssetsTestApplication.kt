@@ -28,6 +28,8 @@ import pt.alinha.riskassets.RiskAssetsPlugin
 import pt.alinha.riskassets.internal.web.AssetController
 import pt.alinha.riskassets.internal.web.CriticalServiceController
 import pt.alinha.riskassets.internal.web.RiskAssetsProblems
+import pt.alinha.riskassets.internal.web.RiskController
+import pt.alinha.riskassets.internal.web.RiskProblems
 
 /**
  * The plugin with the core's real RBAC, tenant resolution and audit trail on PostgreSQL. Only the JWT decoder is a
@@ -48,6 +50,7 @@ import pt.alinha.riskassets.internal.web.RiskAssetsProblems
     RiskAssetsPlugin::class,
     CriticalServiceCatalog::class, CriticalServiceController::class, RiskAssetsProblems::class,
     AssetInventory::class, AssetController::class,
+    RiskService::class, RiskController::class, RiskProblems::class,
 )
 class RiskAssetsTestApplication {
     @Bean
